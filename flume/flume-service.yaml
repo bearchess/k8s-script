@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: flume
+    project: srm
+    component: middleware
+  name: flume
+  namespace: public-app-demo-pre
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flume
+      project: srm
+      component: middleware
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: flume
+        project: srm
+        component: middleware
+    spec:
+      containers:
+      - image: luoxiaojun1992/flume:latest
+        name: flume
+        resources: {}
+        volumeMounts:
+        - name: config-map
+          mountPath: /apache-flume/conf/flume-conf.properties
+          subPath: flume-conf.properties
+        ports:
+        - name: admin
+          containerPort: 8848
+      volumes:
+      - name: config-map
+        configMap:
+          name: flume-conf
+      nodeSelector:
+        component: public-app
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - node02
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: flume
+    project: srm
+    component: middleware
+  name: flume
+  namespace: public-app-demo-pre
+spec:
+  ports:
+  - name: flume
+    port: 8848
+    protocol: TCP
+    targetPort: admin
+  selector:
+    app: flume
+    project: srm
+    component: middleware
